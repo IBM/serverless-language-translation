@@ -3,6 +3,8 @@ import requests
 
 # Handles incoming text messages
 # This whisk action will need to be exposed as a webaction, and the link to the generated url will be provided as Twilio's Messaging webhook
+# required params:
+# etcd_endpoint, translation_password, translation_username, watson_iot_username, watson_iot_password, watson_iot_org, watson_iot_device
 def main(dict):
   sender = dict['From'] # dict['sender']
   message = dict['Body'] # dict['message']

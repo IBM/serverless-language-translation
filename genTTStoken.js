@@ -1,4 +1,4 @@
-// generates text to speech token for UI
+// UI sends an empty message to this topic, action generates a text to speech token as a response
 // bound to MQTT channel
 // 'iot-2/type/MQTTDevice/id/965d11de/evt/tokenreq/fmt/json'
 var mqtt = require('mqtt')

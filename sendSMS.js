@@ -15,7 +15,8 @@ function sendSMS() {
   })
 }
 
-function queryEtcd(targetLanguage, message) {
+// check etcd for phone numbers subscribing to language of translated result
+function queryEtcd(language, message) {
   request('http://' + params.etcdIP + ':2379/v2/keys/languages/' + targetLanguage,
     function (error, response, body) {
       console.log("checking for " + targetLanguage + "numbers registered in etcd")
@@ -38,8 +39,5 @@ function queryEtcd(targetLanguage, message) {
 
 
 function main(params) {
-  var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
-  for (language in languages) {
-    queryEtcd(lanuage, params.message)
-  }
+  queryEtcd(params.language, params.payload)
 }
