@@ -2,30 +2,53 @@
 //
 // bound to MQTT channel
 // 'iot-2/type/MQTTDevice/id/965d11de/evt/txtFromClient/fmt/json'
-var openwhisk = require('openwhisk');
+
+// expects params for payload, language, and translation creds
+var LanguageTranslatorV2 = require('watson-developer-cloud/language-translator/v2');
+var openwhisk = require('openwhisk')
 
 function main(params) {
-  var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt'] // todo, this array should be adjusted based on subscribers in room.
-  for (targetLanguage in languages) {
-      if ( targetLanguage != params.language ) {
-        // translation action needs to be created beforehand with
-        // wsk package bind /whisk.system/watson-translator myWatsonTranslator -p username MYUSERNAME -p password MYPASSWORD
-        ow.actions.invoke('myWatsonTranslator', {
-            translateTo: targetLanguage,
-            translateFrom: params.language,
-            client: params.client,
-            payload: params.payload
-        }
+  var ow = openwhisk();
+  var language_translator =  new LanguageTranslatorV2({
+          username: params.language_translation_username,
+          password: params.language_translation_password,
+          version: "v2",
+          url: 'https://gateway.watsonplatform.net/language-translator/api/'
       }
-  ).then(result =>
-      // trigger bound to two "publish" actions, one for mqtt, the other for SMS. etcd keeps track of SMS subscribers to each language
-      ow.trigger.invoke('msgTranslated',
+  )
+  // var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
+  var languages = ['es', 'fr']
+  var translations = languages.map(function (targetLanguage) {
+    return new Promise((resolve, reject) => {
+      language_translator.translate(
         {
-          payload: result.payload,
-          client: params.client,
-          language: result.translateTo
+          text: params.payload,
+          source: params.sourceLanguage,
+          target: targetLanguage
+        },
+        function(err, translation) {
+          if (err)  {
+            console.log('error:', err);
+          } else  {
+            console.log("translation complete");
+            resolve(translation['translations'][0])
+          }
         }
       )
+    }).then(result =>
+      ow.triggers.invoke({
+        "name": 'msgTranslated',
+        "params": {
+          payload: result.translation,
+          client: params.client,
+          language: targetLanguage
+        }
+      })
     )
-};
+  })
+
+  return Promise.all(translations).then(function (results) {
+        console.log(results);
+        return resolve({payload: "Translations complete"});
+  });
 }
