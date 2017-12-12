@@ -3,29 +3,49 @@
 This repository contains a series of serverless functions that can serve as the backend for a multilingual chat room, as described in the blog post [here](https://medium.com/kkbankol-events/the-motivation-behind-this-particular-project-comes-from-playing-one-of-my-favorite-android-games-76c92b27c8e8)
 
 ![Architecture](/assets/architecture.png)
+TODO, update architecture
 
 Prerequisites:
 Install the MQTT package/feed found in this [repository](https://github.com/krook/openwhisk-package-mqtt-watson). This will allow actions to be invoked in response to incoming MQTT messages.
 
-Upload each action to the Cloud Functions codebase using
+Upload each "Action" to the Cloud Functions codebase using the following commands
 ```
-wsk action create <action_name> <path_to_file>
+wsk action create translateText translateText.js
+wsk action create sendSMS sendSMS.js
+wsk action create iotPub iotPub.py
+wsk action create handleIncomingSMS handleIncomingSMS.py
 ```
 
 After each action is created, set default credentials for the corresponding services
 ```
 wsk action update getTTSToken --param TTS_PASSWD <passwd> --param TTS_USERNAME <username>
+wsk action update translateText --param language_translation_username ${language_translation_username} --param language_translation_password ${language_translation_password}
+...
 ```
 
-Triggers / Rules will also need to be created beforehand like so.
+Test action creds are valid with
 ```
+```
+
+Create "Triggers" to represent events
+```
+wsk trigger create audioMsgReceived
+wsk trigger create txtMsgReceived
+wsk trigger create SMSMsgReceived
 wsk trigger create msgTranslated
-wsk rule create publishtoMQTT msgTranslated iot-pub
+```
+
+Create "Rules" to bind triggers and actions
+```
+# wsk rule create RULE_NAME TRIGGER_NAME ACTION_NAME
+wsk rule create handleTxtMessage txtMsgReceived translateText
+wsk rule create handleSMSMessage SMSMsgReceived translateText
+wsk rule create publishtoIOT msgTranslated iotPub
 wsk rule create publishtoSMS msgTranslated sendSMS
 ```
 
 Flow:
-MQTT message received as JSON object to topic 'iot-2/type/${deviceType}/id/${orgId}/evt/${eventName}/fmt/json'
+MQTT message received as JSON object to topic `iot-2/type/${deviceType}/id/${orgId}/evt/${eventName}/fmt/json`
 ```
 {
   client: "client_1234",
@@ -41,7 +61,9 @@ Translation action passes message payload through a loop, where each item is a l
 
 
 Restrictions:
-Watson IOT provides an MQTT broker, but has restrictions on how MQTT topics can be structured. So, only one section of the topic is customizable, the "event name". In a nutshell, this limitation keeps us from using self described topics like "fromClient/text/en"
+Watson IOT provides an MQTT broker, but has restrictions on how MQTT topics can be structured. So, only one section of the topic is customizable, the "event name". This limitation prevents us from using self described topics like `fromClient/text/en`, which would allow clients to subscribe only to the language of their choice. Therefore they'll need to receive all messages and discard the unneeded ones,
+
+MQTT package/feed requires a CF app, which technically means this implementation is not serverless
 
 TODO:
 Create script to create wsk actions, populate credentials using .env files
