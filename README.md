@@ -2,7 +2,7 @@
 
 # Deploy a Serverless Multilingual Conference Room
 
-In this code pattern, we will create the workings for a mulitlingual chat room using OpenWhisk and Watson text-to-speech.  The MQTT messaging protocol is also leveraged, which allows for each client to publish and subscribe to one or more channels.  This repository contains a series of serverless functions are called in sequence determinded by the channel to which a message is submitted.  
+In this code pattern, we will create the workings for a multilingual chat room using OpenWhisk and Watson text-to-speech.  The MQTT messaging protocol is also leveraged, which allows for each client to publish and subscribe to one or more channels.  This repository contains a series of serverless functions are called in sequence determinded by the channel to which a message is submitted.  
 
 When the reader has completed this Code Pattern, they will understand how to:
 
@@ -32,7 +32,7 @@ When the reader has completed this Code Pattern, they will understand how to:
 * [Serverless](https://www.ibm.com/cloud-computing/bluemix/openwhisk): An event-action platform that allows you to execute code in response to an event.
 
 # Watch the Video
-![](https://imgur.com/Q4DGOPM.mp4)
+![](https://i.imgur.com/Q4DGOPM.gif)
 
 # Steps
 
@@ -60,7 +60,7 @@ wsk action update translateText --param language_translation_username ${language
 ```
 
 ### 2. Create Triggers
-Create "Triggers" to represent events
+Create `Triggers` to represent events
 ```
 wsk trigger create audioMsgReceived
 wsk trigger create txtMsgReceived
@@ -68,7 +68,7 @@ wsk trigger create SMSMsgReceived
 wsk trigger create msgTranslated
 ```
 ### 3. Create Rules
-Create "Rules" to bind triggers and actions
+Create `Rules` to bind triggers and actions
 ```
 # wsk rule create RULE_NAME TRIGGER_NAME ACTION_NAME
 wsk rule create handleTxtMessage txtMsgReceived translateText
@@ -94,12 +94,12 @@ Translation action passes message payload through a loop, where each item is a l
 
 
 Restrictions:
-Watson IOT provides an MQTT broker, but has restrictions on how MQTT topics can be structured. So, only one section of the topic is customizable, the "event name". This limitation prevents us from using self described topics like `fromClient/text/en`, which would allow clients to subscribe only to the language of their choice. Therefore they'll need to receive all messages and discard the unneeded ones,
+Watson IOT provides an MQTT broker, but has restrictions on how MQTT topics can be structured. So, only one section of the topic is customizable, the "event name". This limitation prevents us from using self described topics like `fromClient/text/en`, which would allow clients to subscribe only to the language of their choice. Therefore they'll need to receive all messages and discard the unneeded ones.
 
 MQTT package/feed requires a CF app, which technically means this implementation is not serverless
 
 TODO:
-Create script to create wsk actions, populate credentials using .env files
+Create script to create wsk actions, populate credentials using `.env` files
 
 Port all issues from [Taiga kanban](https://tree.taiga.io/project/kalonb91-lang/) to this repository
 
