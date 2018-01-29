@@ -32,7 +32,7 @@ When the reader has completed this Code Pattern, they will understand how to:
 * [Serverless](https://www.ibm.com/cloud-computing/bluemix/openwhisk): An event-action platform that allows you to execute code in response to an event.
 
 # Watch the Video
-![](https://i.imgur.com/Q4DGOPM.gif)
+[![](http://img.youtube.com/vi/eXY0uh_SeKs/0.jpg)](https://www.youtube.com/watch?v=eXY0uh_SeKs)
 
 # Steps
 
@@ -42,6 +42,7 @@ Install the MQTT package/feed found in this [repository](https://github.com/kroo
 1. [Upload Actions](#1-upload-actions)
 2. [Create Triggers](#2-create-triggers)
 3. [Create Rules](#3-create-rules)
+4. [Deploy UI](#4-deploy-ui)
 
 ### 1. Upload Actions
 Upload each "Action" to the Cloud Functions codebase using the following commands
@@ -97,6 +98,10 @@ Restrictions:
 Watson IOT provides an MQTT broker, but has restrictions on how MQTT topics can be structured. So, only one section of the topic is customizable, the "event name". This limitation prevents us from using self described topics like `fromClient/text/en`, which would allow clients to subscribe only to the language of their choice. Therefore they'll need to receive all messages and discard the unneeded ones.
 
 MQTT package/feed requires a CF app, which technically means this implementation is not serverless
+
+### 4. Deploy UI
+
+If all you need is the server side logic, you can stop here.  But optionally, you can delpoy the UI provided by https://gihub.com/IBM/language-translation-ui 
 
 TODO:
 Create script to create wsk actions, populate credentials using `.env` files
