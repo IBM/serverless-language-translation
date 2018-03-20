@@ -21,7 +21,7 @@ function queryEtcd(language, message) {
     function (error, response, body) {
       console.log("checking for " + targetLanguage + "numbers registered in etcd")
       console.log("SENDER: " + client)
-      if (JSON.parse(body).node && JSON.parse(body).node.nodes) {
+      if (body && JSON.parse(body).node && JSON.parse(body).node.nodes) {
         for (i of JSON.parse(body).node.nodes) {
           console.log( "TARGET: " + i.key.split('+')[1] )
           if ( client.split('+')[1] != i.key.split('+')[1] ) {
