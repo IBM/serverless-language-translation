@@ -101,7 +101,7 @@ MQTT package/feed requires a CF app, which technically means this implementation
 
 ### 4. Deploy UI
 
-If all you need is the server side logic, you can stop here.  But optionally, you can delpoy the UI provided by https://gihub.com/IBM/language-translation-ui 
+If all you need is the server side logic, you can stop here.  But optionally, you can delpoy the UI provided by https://github.com/IBM/language-translation-ui
 
 TODO:
 Create script to create wsk actions, populate credentials using `.env` files
