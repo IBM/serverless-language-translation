@@ -32,19 +32,19 @@ def main(dict):
     message = dict['Body']
 
     # Get etcd keys
-    etcd_keys = 'http://' + params.etcd_endpoint + ':2379/v2/keys'
+    etcd_keys = 'http://' + dict['etcd_endpoint'] + ':2379/v2/keys'
 
     watson_language_translation = {
       "url": "https://gateway.watsonplatform.net/language-translation/api",
-      "password": params.translation_password,
-      "username": params.translation_username
+      "password": dict['translation_password'],
+      "username": dict['translation_username']
     }
 
     watson_iot_creds = {
-      "username": params.watson_iot_username,
-      "password": params.watson_iot_password,
-      "org": params.watson_iot_org,
-      "device": params.watson_iot_device
+      "username": dict['watson_iot_username'],
+      "password": dict['watson_iot_password'],
+      "org": dict['watson_iot_org'],
+      "device": dict['watson_iot_device']
     }
 
     MQTT_PATH = '.messaging.internetofthings.ibmcloud.com:1883/api/v0002/device/types/MQTTDevice/devices/'  # noqa
