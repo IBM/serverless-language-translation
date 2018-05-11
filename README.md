@@ -10,7 +10,7 @@ When the reader has completed this Code Pattern, they will understand how to:
 * Interact with the Watson IoT platform
 * Set up a CloudFoundry application
 
-![Architecture](/assets/architecture.png)
+![Architecture](/doc/source/images/architecture.png)
 
 ## Flow
 
