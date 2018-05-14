@@ -2,7 +2,7 @@
 
 # Deploy a Serverless Multilingual Conference Room
 
-In this code pattern, we will create the workings for a multilingual chat room using OpenWhisk and Watson text-to-speech.  The MQTT messaging protocol is also leveraged, which allows for each client to publish and subscribe to one or more channels.  This repository contains a series of serverless functions are called in sequence determinded by the channel to which a message is submitted.  
+In this code pattern, we will create the workings for a multilingual chat room using OpenWhisk, Watson text-to-speech and Watson Language Translator.  The MQTT messaging protocol is also leveraged, which allows for each client to publish and subscribe to one or more channels.  This repository contains a series of serverless functions are called in sequence determinded by the channel to which a message is submitted.  
 
 When the reader has completed this Code Pattern, they will understand how to:
 
