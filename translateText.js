@@ -39,7 +39,10 @@ function main(params) {
         {
           text: params.payload,
           source: params.sourceLanguage,
-          target: targetLanguage
+          target: targetLanguage,
+          headers: {
+            'X-Watson-Technology-Preview': '2017-07-01'
+          }
         },
         function(err, translation) {
           if (err)  {
