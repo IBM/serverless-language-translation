@@ -24,6 +24,7 @@ When the reader has completed this Code Pattern, they will understand how to:
 
 * [OpenWhisk](https://console.ng.bluemix.net/openwhisk): Execute code on demand in a highly scalable, serverless environment.
 * [Watson Text to Speech](https://www.ibm.com/watson/developercloud/text-to-speech.html): Converts written text into natural sounding audio in a variety of languages and voices.
+* [Watson Language Translator](https://www.ibm.com/watson/services/language-translator/): Translate text from one language to another. Take text from across the globe and present it in the language of your choice.
 
 ## Featured technologies
 
