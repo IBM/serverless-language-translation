@@ -18,7 +18,7 @@ var request = require('request')
 function sendSMS() {
   twilioClient.messages.create({
       to: i.key.split('+')[1],
-      from: params.twilo_number,
+      from: params.twilio_number,
       body: message.toString(),
   }, function(err, message) {
       if (err) {
@@ -32,7 +32,7 @@ function sendSMS() {
 
 // check etcd for phone numbers subscribing to language of translated result
 function queryEtcd(language, message) {
-  request('http://' + params.etcdIP + ':2379/v2/keys/languages/' + targetLanguage,
+  request('http://' + params.etcd_url + ':2379/v2/keys/languages/' + targetLanguage,
     function (error, response, body) {
       console.log("checking for " + targetLanguage + "numbers registered in etcd")
       console.log("SENDER: " + client)

@@ -24,25 +24,23 @@ var openwhisk = require('openwhisk')
 
 function main(params) {
   var ow = openwhisk();
+  var msgVals = JSON.parse(params.body).d
   var language_translator =  new LanguageTranslatorV2({
-          username: params.language_translation_username,
-          password: params.language_translation_password,
+          username: params.__bx_creds.language_translation.username || params.language_translation_username,
+          password: params.__bx_creds.language_translation.password || params.language_translation_password,
           version: "v2",
-          url: 'https://gateway.watsonplatform.net/language-translator/api/'
+          url: params.__bx_creds.language_translation.url || 'https://gateway.watsonplatform.net/language-translator/api/'
       }
   )
-  // var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
-  var languages = ['es', 'fr']
+  var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
+  // var languages = ['es', 'fr']
   var translations = languages.map(function (targetLanguage) {
     return new Promise((resolve, reject) => {
       language_translator.translate(
         {
-          text: params.payload,
-          source: params.sourceLanguage,
-          target: targetLanguage,
-          headers: {
-            'X-Watson-Technology-Preview': '2017-07-01'
-          }
+          text: msgVals.payload,
+          source: msgVals.sourceLanguage,
+          target: targetLanguage
         },
         function(err, translation) {
           if (err)  {
@@ -58,7 +56,7 @@ function main(params) {
         "name": 'msgTranslated',
         "params": {
           payload: result.translation,
-          client: params.client,
+          client: msgVals.client,
           language: targetLanguage
         }
       })

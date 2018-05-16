@@ -1,0 +1,3 @@
+[submodule "openwhisk-package-mqtt-watson"]
+	path = openwhisk-package-mqtt-watson
+	url = https://github.com/kkbankol-ibm/openwhisk-package-mqtt-watson

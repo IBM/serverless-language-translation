@@ -35,10 +35,13 @@ When the reader has completed this code pattern, they will understand how to:
 # Watch the Video
 [![](http://img.youtube.com/vi/eXY0uh_SeKs/0.jpg)](https://www.youtube.com/watch?v=eXY0uh_SeKs)
 
-# Prerequisites:
-Install the MQTT package/feed found in this [repository](https://github.com/krook/openwhisk-package-mqtt-watson). This will allow actions to be invoked in response to incoming MQTT messages.
+<!-- [Animation](https://i.imgur.com/Q4DGOPM.gifv) -->
+<!-- TODO, Animation too large, cut out 6 MB -->
 
 # Steps
+
+## Prerequisites:
+Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). These feed enables Openwhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages.
 
 1. [Create Services](#1-create-services)
 2. [Upload Actions](#2-upload-actions)
@@ -49,9 +52,16 @@ Install the MQTT package/feed found in this [repository](https://github.com/kroo
 ### 1. Create Services
 
 Create the required IBM Cloud services.
+- [Speech To Text](https://console.bluemix.net/catalog/services/speech-to-text)
+- [Text To Speech](https://console.bluemix.net/catalog/services/text-to-speech)
+- [Watson IoT Platform](https://console.bluemix.net/catalog/services/internet-of-things-platform)
+
+For SMS integration, create the following third party services.
+- [Twilio](https://www.twilio.com/)
+<!-- - [ETCD](https://console.bluemix.net/catalog/services/compose-for-etcd/) TODO, the free etcd plan has been removed, perhaps we can shift to redis instead -->
 
 ### 2. Upload Actions
-Upload each "Action" to the Cloud Functions codebase using the following commands.
+Upload each "Action" to the Cloud Functions codebase with the following commands.
 ```
 bx wsk action create translateText translateText.js
 bx wsk action create sendSMS sendSMS.js
@@ -59,11 +69,17 @@ bx wsk action create iotPub iotPub.py
 bx wsk action create handleIncomingSMS handleIncomingSMS.py
 ```
 
-After each action is created, set default credentials for the corresponding services.
+After each action is created, set or bind default credentials for the corresponding services.
 ```
-# bx wsk action update getTTSToken --param TTS_PASSWD <passwd> --param TTS_USERNAME <username>
-bx wsk action update translateText --param language_translation_username ${language_translation_username} --param language_translation_password ${language_translation_password}
-...
+<!-- # bx wsk action update getTTSToken --param TTS_PASSWD <passwd> --param TTS_USERNAME <username> -->
+# Most IBM Cloud native service credentials can be easily imported to a Cloud function using the "service bind" command
+# bx wsk service bind <service> <action_name>
+bx wsk service bind language_translator translateText
+
+# Credentials for third party services can be set using the "update command"
+# bx wsk action update <action_name> -p <param_name> <param_value>
+bx wsk action update iotPub -p iot_org_id ${iot_org_id} -p device_id ${device_id} -p device_type ${device_type} -p api_token ${api_token}
+bx wsk action update sendSMS -p twilio_number ${twilio_number} -p etcd_url ${etcd_url}
 ```
 
 ### 3. Create Triggers
@@ -75,7 +91,7 @@ bx wsk trigger create SMSMsgReceived
 bx wsk trigger create msgTranslated
 ```
 ### 4. Create Rules
-Create `Rules` to bind triggers and actions.
+Create `Rules`, which execute actions when certain triggers are activated.
 ```
 # bx wsk rule create RULE_NAME TRIGGER_NAME ACTION_NAME
 bx wsk rule create handleTxtMessage txtMsgReceived translateText
@@ -92,28 +108,28 @@ If all you need is the server side logic, you can stop here.  But optionally, yo
 
 Flow:
 
-MQTT message received as JSON object to topic `iot-2/type/${deviceType}/id/${orgId}/evt/${eventName}/fmt/json`
+- MQTT message received as JSON object to topic `iot-2/type/${deviceType}/id/${orgId}/evt/${eventName}/fmt/json`
 ```
 {
   client: "client_1234",
-  message: "hello",
-  language: "en"
+  payload: "hello",
+  sourceLanguage: "en"
 }
 ```
 
-Trigger associated with topic forwards object containing message payload/language to translation action.
-Translation action passes message payload through a loop, where each item is a language that the original message will be translated to. After translation is complete, another trigger will be fired, which kicks off two more "publish" actions simultaneously.
+- Trigger associated with topic forwards message payload/language to translation action.
+- Translation action passes message payload through a loop, where each item is a language that the original message will be translated to. After translation is complete, another trigger will be fired, which kicks off two other "publish" actions simultaneously.
   - One action publishes results to all MQTT clients
   - The other action looks up SMS subscriber numbers/language in ETCD and sends them the result via Twilio.
 
-Restrictions:
+<!-- Restrictions:
 
 Watson IOT provides an MQTT broker, but has restrictions on how MQTT topics can be structured. So, only one section of the topic is customizable, the "event name". This limitation prevents us from using self describing topics like `fromClient/text/en`, which would allow clients to subscribe only to the language of their choice. Therefore they'll need to receive all messages and discard the unneeded ones.
 
-MQTT package/feed requires a CF app, which technically means this implementation is not serverless.
+MQTT package/feed requires a CF app, which technically means this implementation is not serverless. -->
 
 # Links
-* [Watson Node.js SDK](https://github.com/watson-developer-cloud/node-sdk)
+<!-- * [Watson Node.js SDK](https://github.com/watson-developer-cloud/node-sdk) -->
 
 # License
 [Apache 2.0](LICENSE)
