@@ -30,7 +30,7 @@ When the reader has completed this code pattern, they will understand how to:
 
 * [Messaging](https://developer.ibm.com/messaging/message-hub/): Messaging is a key technology for modern applications using loosely decoupled architecture patterns such as microservices.
 * [Node.js](https://nodejs.org/): An open-source JavaScript run-time environment for executing server-side JavaScript code.
-* [Serverless](https://www.ibm.com/cloud-computing/bluemix/openwhisk): An event-action platform that allows you to execute code in response to an event.
+* [OpenWhisk](https://www.ibm.com/cloud-computing/bluemix/openwhisk): An open source event-driven platform that allows you to execute code in response to an event. This is the underlying technology for the IBM Cloud Functions offering
 
 # Watch the Video
 [![](http://img.youtube.com/vi/eXY0uh_SeKs/0.jpg)](https://www.youtube.com/watch?v=eXY0uh_SeKs)
@@ -41,8 +41,8 @@ When the reader has completed this code pattern, they will understand how to:
 # Steps
 
 ## Prerequisites:
-Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). These feed enables Openwhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages.
-
+Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). This "feed" enables Openwhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
+[Deploy MQTT Feed]()
 1. [Create Services](#1-create-services)
 2. [Upload Actions](#2-upload-actions)
 3. [Create Triggers](#3-create-triggers)
@@ -103,6 +103,11 @@ bx wsk rule create publishtoSMS msgTranslated sendSMS
 ### 5. Deploy UI
 
 If all you need is the server side logic, you can stop here.  But optionally, you can deploy the UI provided by https://github.com/IBM/language-translation-ui
+```
+git clone https://github.com/IBM/language-translation-ui
+cd language-translation-ui && npm start
+# assuming the npm start command succeeds, you should be able to access the UI at http://127.0.0.1:8080
+```
 
 ## Developer Notes
 
@@ -117,8 +122,8 @@ Flow:
 }
 ```
 
-- Trigger associated with topic forwards message payload/language to translation action.
-- Translation action passes message payload through a loop, where each item is a language that the original message will be translated to. After translation is complete, another trigger will be fired, which kicks off two other "publish" actions simultaneously.
+- Trigger associated with topic forwards message payload/language to translator action.
+- Translator action passes message payload through a loop, where each item is a language that the original message will be translated to. After translation is complete, another trigger will be fired, which kicks off two other "publish" actions simultaneously.
   - One action publishes results to all MQTT clients
   - The other action looks up SMS subscriber numbers/language in ETCD and sends them the result via Twilio.
 

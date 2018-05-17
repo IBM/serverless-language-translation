@@ -25,13 +25,24 @@ var openwhisk = require('openwhisk')
 function main(params) {
   var ow = openwhisk();
   var msgVals = JSON.parse(params.body).d
-  var language_translator =  new LanguageTranslatorV2({
-          username: params.__bx_creds.language_translation.username || params.language_translation_username,
-          password: params.__bx_creds.language_translation.password || params.language_translation_password,
-          version: "v2",
-          url: params.__bx_creds.language_translation.url || 'https://gateway.watsonplatform.net/language-translator/api/'
-      }
-  )
+  if (params.__bx_creds && params.__bx_creds.language_translator) {
+    config = {
+      username: params.__bx_creds.language_translator.username,
+      password: params.__bx_creds.language_translator.password,
+      url: params.__bx_creds.language_translator.url,
+      version: "v2",
+      type: "bound_creds"
+    }
+  } else {
+    config = {
+      username: params.language_translator_username,
+      password: params.language_translator_password,
+      url: 'https://gateway.watsonplatform.net/language-translator/api/',
+      version: "v2",
+      type: "user_provided"
+    }
+  }
+  var language_translator =  new LanguageTranslatorV2(config)
   var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
   // var languages = ['es', 'fr']
   var translations = languages.map(function (targetLanguage) {
@@ -40,7 +51,10 @@ function main(params) {
         {
           text: msgVals.payload,
           source: msgVals.sourceLanguage,
-          target: targetLanguage
+          target: targetLanguage,
+          headers: {
+            'X-Watson-Technology-Preview': '2017-07-01'
+          }
         },
         function(err, translation) {
           if (err)  {
@@ -53,8 +67,8 @@ function main(params) {
       )
     }).then(result =>
       ow.triggers.invoke({
-        "name": 'msgTranslated',
-        "params": {
+        name: 'msgTranslated',
+        params: {
           payload: result.translation,
           client: msgVals.client,
           language: targetLanguage
