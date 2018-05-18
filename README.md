@@ -51,11 +51,91 @@ Create the required IBM Cloud services.
 - [Speech To Text](https://console.bluemix.net/catalog/services/speech-to-text)
 - [Text To Speech](https://console.bluemix.net/catalog/services/text-to-speech)
 - [Watson IoT Platform](https://console.bluemix.net/catalog/services/internet-of-things-platform)
+- [Watson Language Translator](https://console.bluemix.net/catalog/services/language-translator)
 
 For SMS integration, create the following third party services.
 - [Twilio](https://console.bluemix.net/catalog/services/twilio-programmable-sms)
 - [Redis](https://console.bluemix.net/catalog/services/redis-cloud)
 <!-- - [ETCD](https://console.bluemix.net/catalog/services/compose-for-etcd/) TODO, the free etcd plan has been removed, perhaps we can shift to redis instead -->
+
+Each service can be provisioned with the following steps
+
+Navigate to the IBM Cloud dashboard at [https://console.bluemix.net/](https://console.bluemix.net/) and click the "Catalog" button in the upper right
+<p align="center">
+<img src="https://i.imgur.com/vFCHSF4.png">
+</p>
+
+Type in the name of the service and select the resulting icon
+<p align="center">
+<img src="https://i.imgur.com/X78OVt7.png">
+</p>
+
+Select the pricing plan and click "Create". If deploying on an IBM Lite account, be sure to select the free "Lite" plan
+<p align="center">
+<img src="https://i.imgur.com/S0iNZu0.png">
+</p>
+
+After being provisioned, the Watson IoT Platform service will need a bit of additional configuration, as we'll need to generate a set of credentials for connecting to the broker. We can do so by entering the IoT Platform dashboard, selecting "Devices" from the left hand menu, and then clicking the "Add Device" button.
+
+<p align="center">
+<img src="https://i.imgur.com/fec24FG.png"  data-canonical-src="https://i.imgur.com/fec24FG.png">
+</p>
+
+Next, provide a device type and ID.
+<p align="center">
+<img src="https://i.imgur.com/REQfYIK.png"  data-canonical-src="https://i.imgur.com/REQfYIK.png">
+</p>
+
+The next few tabs (Device Information, Groups, Security) can be left as is with the default settings.
+
+<p align="center">
+<img src="https://i.imgur.com/rycnjlF.png"  data-canonical-src="https://i.imgur.com/rycnjlF.png">
+</p>
+
+Clicking the "Finish" button will register a device and generate a set of credentials that can be used to publish messages to the IoT Platform. Be sure to take note of the Device type and Device ID, and place both in the cfcreds.env file if using the `setup.sh` script.
+
+We'll need to generate a different set of credentials to be able to publish and subscribe to the MQTT Broker
+<!-- <p align="center">
+<img src="https://i.imgur.com/A2A6yXW.png" width="650" height="450">
+</p> -->
+
+We can do so by selecting the "Apps" option in the left hand menu. Then, click the "Generate API Key" button
+<p align="center">
+<img src="https://i.imgur.com/b9Iu9DS.png" width="650" height="450">
+</p>
+
+We can leave the fields in the "Information" blank and click next.
+In the "Permissions" tab, we'll select the "Backend Trusted Application" role. Once this is selected, click "Generate Key"
+<p align="center">
+<img src="https://i.imgur.com/ss6jpOZ.png" width="650" height="450">
+</p>
+
+The result will give us an API Key and Authentication Token. These can be supplied as the username and password for a MQTT client. To make setup a bit easier, place these values in the `cfcreds.env` file as IOT_API_KEY and IOT_APP_AUTH_TOKEN
+<p align="center">
+<img src="https://i.imgur.com/hfnB1B8.png" width="650" height="450">
+</p>
+
+At this point, the values `IOT_ORG_ID`, `IOT_DEVICE_TYPE`, `IOT_DEVICE_ID`, `IOT_AUTH_TOKEN`, and `IOT_API_TOKEN` should be in the cfcreds.env file. In this example, we used the npm [mqtt.js](https://www.npmjs.com/package/mqtt) package, which can be installed with `npm install -g mqtt`. And then, we can run a sample MQTT publish/subscribe command to confirm that the credentials are valid.
+
+Subscribe to the MQTT broker in one tab
+```
+export "$(cat cfcreds.env)"
+mqtt_sub -i "a:${IOT_ORG_ID}:test" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKEN}" -h "${IOT_ORG_ID}.messaging.internetofthings.ibmcloud.com" -p 1883 -t "iot-2/type/${IOT_DEVICE_TYPE}/id/${IOT_DEVICE_ID}/evt/+/fmt/json"
+
+```
+
+And then publish in another
+```
+export "$(cat cfcreds.env)"
+mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKEN}" -h 'agf5n9.messaging.internetofthings.ibmcloud.com' -p 1883 -t "iot-2/type/${IOT_DEVICE_TYPE}/id/${IOT_DEVICE_ID}/evt/fromClient/fmt/json" -m '{
+    "d" : {
+          "sourceLanguage" : "en",
+          "payload" : "test",
+	        "client": "client1"
+    }
+}'
+```
+
 
 ### 2. Deploy MQTT Feed
 
