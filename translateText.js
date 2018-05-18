@@ -24,7 +24,12 @@ var openwhisk = require('openwhisk')
 
 function main(params) {
   var ow = openwhisk();
-  var msgVals = JSON.parse(params.body).d
+  if (params.body && JSON.parse(params.body).d) {
+    msgVals = JSON.parse(params.body).d
+  } else {
+    msgVals = params
+  }
+
   if (params.__bx_creds && params.__bx_creds.language_translator) {
     config = {
       username: params.__bx_creds.language_translator.username,
@@ -43,8 +48,8 @@ function main(params) {
     }
   }
   var language_translator =  new LanguageTranslatorV2(config)
-  var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
-  // var languages = ['es', 'fr']
+  // var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
+  var languages = ['es', 'fr']
   var translations = languages.map(function (targetLanguage) {
     return new Promise((resolve, reject) => {
       language_translator.translate(

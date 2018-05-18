@@ -35,19 +35,15 @@ When the reader has completed this code pattern, they will understand how to:
 # Watch the Video
 [![](http://img.youtube.com/vi/eXY0uh_SeKs/0.jpg)](https://www.youtube.com/watch?v=eXY0uh_SeKs)
 
-<!-- [Animation](https://i.imgur.com/Q4DGOPM.gifv) -->
-<!-- TODO, Animation too large, cut out 6 MB -->
-
 # Steps
 
 ## Prerequisites:
-Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). This "feed" enables Openwhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
-[Deploy MQTT Feed]()
 1. [Create Services](#1-create-services)
-2. [Upload Actions](#2-upload-actions)
-3. [Create Triggers](#3-create-triggers)
-4. [Create Rules](#4-create-rules)
-5. [Deploy UI](#5-deploy-ui)
+2. [Deploy MQTT Feed](#2-deploy-mqtt-feed)
+3. [Upload Actions](#3-upload-actions)
+4. [Create Triggers](#4-create-triggers)
+5. [Create Rules](#5-create-rules)
+6. [Deploy UI](#6-deploy-ui)
 
 ### 1. Create Services
 
@@ -57,16 +53,21 @@ Create the required IBM Cloud services.
 - [Watson IoT Platform](https://console.bluemix.net/catalog/services/internet-of-things-platform)
 
 For SMS integration, create the following third party services.
-- [Twilio](https://www.twilio.com/)
+- [Twilio](https://console.bluemix.net/catalog/services/twilio-programmable-sms)
+- [Redis](https://console.bluemix.net/catalog/services/redis-cloud)
 <!-- - [ETCD](https://console.bluemix.net/catalog/services/compose-for-etcd/) TODO, the free etcd plan has been removed, perhaps we can shift to redis instead -->
 
-### 2. Upload Actions
+### 2. Deploy MQTT Feed
+
+Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). This "feed" enables Openwhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
+
+### 3. Upload Actions
 Upload each "Action" to the Cloud Functions codebase with the following commands.
 ```
 bx wsk action create translateText translateText.js
 bx wsk action create sendSMS sendSMS.js
 bx wsk action create iotPub iotPub.py
-bx wsk action create handleIncomingSMS handleIncomingSMS.py
+bx wsk action create handleIncomingSMS handleIncomingSMS.js
 ```
 
 After each action is created, set or bind default credentials for the corresponding services.
@@ -75,14 +76,17 @@ After each action is created, set or bind default credentials for the correspond
 # Most IBM Cloud native service credentials can be easily imported to a Cloud function using the "service bind" command
 # bx wsk service bind <service> <action_name>
 bx wsk service bind language_translator translateText
+bx wsk service bind language_translator handleIncomingSMS
+
 
 # Credentials for third party services can be set using the "update command"
 # bx wsk action update <action_name> -p <param_name> <param_value>
-bx wsk action update iotPub -p iot_org_id ${iot_org_id} -p device_id ${device_id} -p device_type ${device_type} -p api_token ${api_token}
-bx wsk action update sendSMS -p twilio_number ${twilio_number} -p etcd_url ${etcd_url}
+bx wsk action update iotPub -p iot_org_id "${IOT_ORG_ID}" -p iot_device_id "${IOT_DEVICE_ID}" -p iot_device_type "${IOT_DEVICE_TYPE}" -p iot_auth_token "${IOT_AUTH_TOKEN}"
+bx wsk action update sendSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
+bx wsk action update handleIncomingSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
 ```
 
-### 3. Create Triggers
+### 4. Create Triggers
 Create `Triggers` to represent events.
 ```
 bx wsk trigger create audioMsgReceived
@@ -90,30 +94,32 @@ bx wsk trigger create txtMsgReceived
 bx wsk trigger create SMSMsgReceived
 bx wsk trigger create msgTranslated
 ```
-### 4. Create Rules
+### 5. Create Rules
 Create `Rules`, which execute actions when certain triggers are activated.
 ```
 # bx wsk rule create RULE_NAME TRIGGER_NAME ACTION_NAME
 bx wsk rule create handleTxtMessage txtMsgReceived translateText
-bx wsk rule create handleSMSMessage SMSMsgReceived translateText
+bx wsk rule create handleMQTTMessage mqttMsgReceived translateText
 bx wsk rule create publishtoIOT msgTranslated iotPub
 bx wsk rule create publishtoSMS msgTranslated sendSMS
 ```
 
-### 5. Deploy UI
+### 6. Deploy UI
 
 If all you need is the server side logic, you can stop here.  But optionally, you can deploy the UI provided by https://github.com/IBM/language-translation-ui
 ```
 git clone https://github.com/IBM/language-translation-ui
-cd language-translation-ui && npm start
-# assuming the npm start command succeeds, you should be able to access the UI at http://127.0.0.1:8080
+cd language-translation-ui
+npm install
+npm start
 ```
+When the npm start command succeeds, you should be able to access the UI at http://127.0.0.1:8080
 
 ## Developer Notes
 
 Flow:
 
-- MQTT message received as JSON object to topic `iot-2/type/${deviceType}/id/${orgId}/evt/${eventName}/fmt/json`
+- MQTT message received as JSON object to topic `iot-2/type/'${deviceType}/id/${orgId}/evt/${eventName}/fmt/json`
 ```
 {
   client: "client_1234",

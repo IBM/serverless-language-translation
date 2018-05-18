@@ -13,48 +13,54 @@
    limitations under the License.
 */
 
-// should be paired as a sequence with "translateText" action and called after each language translation.
-
+// called after "msgTranslated trigger is fired
 function main(params) {
-  var twilioClient = require('twilio')(params.accountSid, params.authToken);
-  var request = require('request')
+  // get twilioSid and twilioAuthToken from
+  // https://www.twilio.com/console
+  const twilioClient = require('twilio')(params.twilioSid, params.twilioAuthToken)
+  var redis = require('redis')
+  const bluebird = require('bluebird')
+  var cursor = '0'
 
-  function sendSMS() {
+  bluebird.promisifyAll(redis.RedisClient.prototype);
+
+  var redisConfig = {
+      user: params.redisUsername,
+      password: params.redisPassword,
+      host: params.redisHost,
+      port: params.redisPort
+  }
+  const redisClient = redis.createClient(redisConfig)
+
+  function sendSMS(recipient) {
     twilioClient.messages.create({
-        to: i.key.split('+')[1],
+        to: recipient,
         from: params.twilioNumber,
-        body: message.toString(),
+        body: params.payload,
     }, function(err, message) {
         if (err) {
           console.log('error:', err);
         }
         else {
-          console.log(message.sid);
+          console.log(message);
         }
     })
   }
 
-  // check etcd for phone numbers subscribing to language of translated result
-  function queryEtcd(language, message, etcdUrl, twilioClient) {
-    request('http://' + etcdUrl + ':2379/v2/keys/languages/' + targetLanguage,
-      function (error, response, body) {
-        console.log("checking for " + targetLanguage + "numbers registered in etcd")
-        console.log("SENDER: " + client)
-        if (body && JSON.parse(body).node && JSON.parse(body).node.nodes) {
-          for (i of JSON.parse(body).node.nodes) {
-            console.log( "TARGET: " + i.key.split('+')[1] )
-            if ( twilioClient.split('+')[1] != i.key.split('+')[1] ) {
-            // console.log(i.key.split('+')[1])
-              sendSMS(message)
-            }
-          }
-        }
-        else {
-            console.log("no numbers found")
-          }
-        }
-    )
-  }
-
-  queryEtcd(params.language, params.payload, params.etcdUrl, twilioClient)
+  // loop through all SMS clients subscribed to given language, text translation result
+  redisClient.scanAsync(cursor, 'MATCH', params.language + ":*").then(
+    function (res) {
+      var keys = res[1]
+      for (key in keys) {
+         redisClient.getAsync(keys[key]).then(
+           function(number) {
+             if ((params.senderNumber) && (params.senderNumber == number)) {
+                 console.log("skipping")
+             } else{
+                 console.log("sending text to " + number)
+                 sendSMS(number)
+             }
+         })
+      }
+  })
 }
