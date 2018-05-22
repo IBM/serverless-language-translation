@@ -35,14 +35,35 @@ When the reader has completed this code pattern, they will understand how to:
 # Watch the Video
 [![](http://img.youtube.com/vi/eXY0uh_SeKs/0.jpg)](https://www.youtube.com/watch?v=eXY0uh_SeKs)
 
-# Steps
-
 ## Prerequisites:
+To interact with the hosted offerings, the IBM Cloud CLI will need to be installed beforehand. The latest CLI releases can be found at the link [here](https://console.bluemix.net/docs/cli/reference/bluemix_cli/download_cli.html#download_install). An install script is maintained at the mentioned link, which can be executed with one of the following commands
+
+```
+# Mac OSX
+curl -fsSL https://clis.ng.bluemix.net/install/osx | sh
+
+# Linux
+curl -fsSL https://clis.ng.bluemix.net/install/linux | sh
+
+# Powershell
+iex(New-Object Net.WebClient).DownloadString('https://clis.ng.bluemix.net/install/powershell')
+```
+After installation is complete, confirm the CLI is working by printing the version
+```
+bx -v
+```
+And then install the "Cloud Functions" plugin with
+```
+bx plugin install Cloud-Functions -r Bluemix
+```
+
+
+# Steps
 1. [Create Services](#1-create-services)
-2. [Deploy MQTT Feed](#2-deploy-mqtt-feed)
-3. [Upload Actions](#3-upload-actions)
-4. [Create Triggers](#4-create-triggers)
-5. [Create Rules](#5-create-rules)
+2. [Upload Actions](#2-upload-actions)
+3. [Create Triggers](#3-create-triggers)
+4. [Create Rules](#4-create-rules)
+5. [Deploy MQTT Feed](#5-deploy-mqtt-feed)
 6. [Deploy UI](#6-deploy-ui)
 
 ### 1. Create Services
@@ -56,7 +77,6 @@ Create the required IBM Cloud services.
 For SMS integration, create the following third party services.
 - [Twilio](https://console.bluemix.net/catalog/services/twilio-programmable-sms)
 - [Redis](https://console.bluemix.net/catalog/services/redis-cloud)
-<!-- - [ETCD](https://console.bluemix.net/catalog/services/compose-for-etcd/) TODO, the free etcd plan has been removed, perhaps we can shift to redis instead -->
 
 Each service can be provisioned with the following steps
 
@@ -75,6 +95,7 @@ Select the pricing plan and click "Create". If deploying on an IBM Lite account,
 <img src="https://i.imgur.com/S0iNZu0.png">
 </p>
 
+#### Additional Configuration: Generate Watson IoT service credentials
 After being provisioned, the Watson IoT Platform service will need a bit of additional configuration, as we'll need to generate a set of credentials for connecting to the broker. We can do so by entering the IoT Platform dashboard, selecting "Devices" from the left hand menu, and then clicking the "Add Device" button.
 
 <p align="center">
@@ -92,7 +113,7 @@ The next few tabs (Device Information, Groups, Security) can be left as is with 
 <img src="https://i.imgur.com/rycnjlF.png"  data-canonical-src="https://i.imgur.com/rycnjlF.png">
 </p>
 
-Clicking the "Finish" button will register a device and generate a set of credentials that can be used to publish messages to the IoT Platform. Be sure to take note of the Device type and Device ID, and place both in the cfcreds.env file if using the `setup.sh` script.
+Clicking the "Finish" button will register a device and generate a set of credentials that can be used to publish messages to the IoT Platform. Be sure to take note of the Device type and Device ID, and place both in the `cfcreds.env` file.
 
 We'll need to generate a different set of credentials to be able to publish and subscribe to the MQTT Broker
 <!-- <p align="center">
@@ -119,14 +140,14 @@ At this point, the values `IOT_ORG_ID`, `IOT_DEVICE_TYPE`, `IOT_DEVICE_ID`, `IOT
 
 Subscribe to the MQTT broker in one tab
 ```
-export "$(cat cfcreds.env)"
-mqtt_sub -i "a:${IOT_ORG_ID}:test" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKEN}" -h "${IOT_ORG_ID}.messaging.internetofthings.ibmcloud.com" -p 1883 -t "iot-2/type/${IOT_DEVICE_TYPE}/id/${IOT_DEVICE_ID}/evt/+/fmt/json"
+source cfcreds.env
+mqtt_sub -i "a:${IOT_ORG_ID}:test" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKEN}" -h "${IOT_ORG_ID}.messaging.internetofthings.ibmcloud.com" -p 1883 -t "iot-2/type/${IOT_DEVICE_TYPE}/id/${IOT_DEVICE_ID}/evt/fromClient/fmt/json"
 
 ```
 
 And then publish in another
 ```
-export "$(cat cfcreds.env)"
+source cfcreds.env
 mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKEN}" -h 'agf5n9.messaging.internetofthings.ibmcloud.com' -p 1883 -t "iot-2/type/${IOT_DEVICE_TYPE}/id/${IOT_DEVICE_ID}/evt/fromClient/fmt/json" -m '{
     "d" : {
           "sourceLanguage" : "en",
@@ -136,12 +157,7 @@ mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKE
 }'
 ```
 
-
-### 2. Deploy MQTT Feed
-
-Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). This "feed" enables Openwhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
-
-### 3. Upload Actions
+### 2. Upload Actions
 Upload each "Action" to the Cloud Functions codebase with the following commands.
 ```
 bx wsk action create translateText translateText.js
@@ -152,7 +168,6 @@ bx wsk action create handleIncomingSMS handleIncomingSMS.js
 
 After each action is created, set or bind default credentials for the corresponding services.
 ```
-<!-- # bx wsk action update getTTSToken --param TTS_PASSWD <passwd> --param TTS_USERNAME <username> -->
 # Most IBM Cloud native service credentials can be easily imported to a Cloud function using the "service bind" command
 # bx wsk service bind <service> <action_name>
 bx wsk service bind language_translator translateText
@@ -166,7 +181,7 @@ bx wsk action update sendSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${
 bx wsk action update handleIncomingSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
 ```
 
-### 4. Create Triggers
+### 3. Create Triggers
 Create `Triggers` to represent events.
 ```
 bx wsk trigger create audioMsgReceived
@@ -174,7 +189,7 @@ bx wsk trigger create txtMsgReceived
 bx wsk trigger create SMSMsgReceived
 bx wsk trigger create msgTranslated
 ```
-### 5. Create Rules
+### 4. Create Rules
 Create `Rules`, which execute actions when certain triggers are activated.
 ```
 # bx wsk rule create RULE_NAME TRIGGER_NAME ACTION_NAME
@@ -184,15 +199,35 @@ bx wsk rule create publishtoIOT msgTranslated iotPub
 bx wsk rule create publishtoSMS msgTranslated sendSMS
 ```
 
+### 5. Deploy MQTT Feed
+
+Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). This "feed" enables OpenWhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
+
+After the Feed has been deployed send a MQTT message to the topic registered with the feed like so
+```
+source cfcreds.env
+mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKEN}" -h 'agf5n9.messaging.internetofthings.ibmcloud.com' -p 1883 -t "iot-2/type/${IOT_DEVICE_TYPE}/id/${IOT_DEVICE_ID}/evt/fromClient/fmt/json" -m '{
+    "d" : {
+          "sourceLanguage" : "en",
+          "payload" : "test",
+	        "client": "client1"
+    }
+}'
+```
+
+As soon as this command is published, we should be able to see a series of actions and triggers being called in the Cloud Functions logs. These logs can be viewed by visiting (https://console.bluemix.net/openwhisk/dashboard)[https://console.bluemix.net/openwhisk/dashboard] or by running `bx wsk activation poll` in a separate tab.
+
 ### 6. Deploy UI
 
-If all you need is the server side logic, you can stop here.  But optionally, you can deploy the UI provided by https://github.com/IBM/language-translation-ui
+If all you need is the server side logic, you can stop here.  But optionally, you can deploy the UI provided by https://github.com/IBM/language-translation-ui. Be sure to source the `cfcreds.env` file beforehand, as the UI expects the `IOT_ORG_ID`, `IOT_DEVICE_TYPE`, `IOT_DEVICE_ID`, `IOT_AUTH_TOKEN`, and `IOT_API_TOKEN` values
+
 ```
 git clone https://github.com/IBM/language-translation-ui
 cd language-translation-ui
 npm install
 npm start
 ```
+
 When the npm start command succeeds, you should be able to access the UI at http://127.0.0.1:8080
 
 ## Developer Notes
@@ -211,7 +246,7 @@ Flow:
 - Trigger associated with topic forwards message payload/language to translator action.
 - Translator action passes message payload through a loop, where each item is a language that the original message will be translated to. After translation is complete, another trigger will be fired, which kicks off two other "publish" actions simultaneously.
   - One action publishes results to all MQTT clients
-  - The other action looks up SMS subscriber numbers/language in ETCD and sends them the result via Twilio.
+  - The other action looks up SMS subscriber numbers/language in Redis and sends them the result via Twilio.
 
 <!-- Restrictions:
 
