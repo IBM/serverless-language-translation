@@ -1,0 +1,7 @@
+[submodule "openwhisk-package-mqtt-watson"]
+        path = openwhisk-package-mqtt-watson
+        url = https://github.com/kkbankol-ibm/openwhisk-package-mqtt-watson.git
+[submodule "language-translation-ui"]
+        path = language-translation-ui
+        url = https://github.com/IBM/language-translation-ui.git
+
