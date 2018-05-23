@@ -14,22 +14,23 @@
 
 import requests
 
-PATH = '.messaging.internetofthings.ibmcloud.com:1883/api/v0002/device/types/'
+HOST = 'messaging.internetofthings.ibmcloud.com'
+PORT = 1883
+PATH = '.' + HOST + ':' + PORT + '/api/v0002/application/types/'
 
 
 def main(dict):
-
     iot_org_id = dict['iot_org_id']
     iot_device_id = dict['iot_device_id']
     iot_device_type = dict['iot_device_type']
     iot_auth_token = dict['iot_auth_token']
-
+    iot_api_key = dict['iot_api_key']
     requests.post('http://' + iot_org_id + PATH + iot_device_type +
                   '/devices/' + iot_device_id + '/events/toClients',
                   headers={'Content-Type': 'application/json'},
                   json={
                     'payload': dict['payload'],
                     'client': dict['client'],
-                    'language': dict['language']},
-                  auth=('use-token-auth', iot_auth_token))
+                    'language': dict['language'] or dict['sourceLanguage']},
+                  auth=(iot_api_key, iot_auth_token))
     return {'msg': dict['payload']}

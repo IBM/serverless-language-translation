@@ -49,7 +49,11 @@ function main(params) {
   }
   var language_translator =  new LanguageTranslatorV2(config)
   // var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
-  var languages = ['es', 'fr']
+  var supportedLanguages = ['es', 'fr', 'en']
+  var languages = supportedLanguages.filter(
+    function(lang) {
+      return lang != msgVals.sourceLanguage
+  });
   var translations = languages.map(function (targetLanguage) {
     return new Promise((resolve, reject) => {
       language_translator.translate(
@@ -82,6 +86,16 @@ function main(params) {
     )
   })
 
+  translations.push(
+    ow.actions.invoke({
+      name: 'iotPub',
+      params: {
+        payload: msgVals.payload,
+        client: msgVals.client,
+        language: msgVals.sourceLanguage
+      }
+    })
+  )
   return Promise.all(translations).then(function (results) {
         console.log(results);
         return resolve({payload: "Translations complete"});

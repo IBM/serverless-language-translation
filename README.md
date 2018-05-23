@@ -57,6 +57,11 @@ And then install the "Cloud Functions" plugin with
 bx plugin install Cloud-Functions -r Bluemix
 ```
 
+If the IBM Cloud Cli was already installed, please make sure the Cloud Functions plugin is the latest version with
+```
+bx plugin update cloud-functions
+```
+
 
 # Steps
 1. [Create Services](#1-create-services)
@@ -174,9 +179,9 @@ bx wsk service bind language_translator translateText
 bx wsk service bind language_translator handleIncomingSMS
 
 
-# Credentials for third party services can be set using the "update command"
+# Credentials for the Watson IoT Platform and third party services can be set using the "update command"
 # bx wsk action update <action_name> -p <param_name> <param_value>
-bx wsk action update iotPub -p iot_org_id "${IOT_ORG_ID}" -p iot_device_id "${IOT_DEVICE_ID}" -p iot_device_type "${IOT_DEVICE_TYPE}" -p iot_auth_token "${IOT_AUTH_TOKEN}"
+bx wsk action update iotPub -p iot_org_id "${IOT_ORG_ID}" -p iot_device_id "${IOT_DEVICE_ID}" -p iot_device_type "${IOT_DEVICE_TYPE}" -p iot_auth_token "${IOT_AUTH_TOKEN}" -p iot_api_key "${IOT_API_KEY}"
 bx wsk action update sendSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
 bx wsk action update handleIncomingSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
 ```
@@ -215,11 +220,11 @@ mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKE
 }'
 ```
 
-As soon as this command is published, we should be able to see a series of actions and triggers being called in the Cloud Functions logs. These logs can be viewed by visiting (https://console.bluemix.net/openwhisk/dashboard)[https://console.bluemix.net/openwhisk/dashboard] or by running `bx wsk activation poll` in a separate tab.
+As soon as this command is published, we should be able to see a series of actions and triggers being called in the Cloud Functions logs. These logs can be viewed by visiting [https://console.bluemix.net/openwhisk/dashboard](https://console.bluemix.net/openwhisk/dashboard) or by running `bx wsk activation poll` in a separate tab.
 
 ### 6. Deploy UI
 
-If all you need is the server side logic, you can stop here.  But optionally, you can deploy the UI provided by https://github.com/IBM/language-translation-ui. Be sure to source the `cfcreds.env` file beforehand, as the UI expects the `IOT_ORG_ID`, `IOT_DEVICE_TYPE`, `IOT_DEVICE_ID`, `IOT_AUTH_TOKEN`, and `IOT_API_TOKEN` values
+If all you need is the server side logic, you can stop here.  But optionally, you can deploy the UI provided by https://github.com/IBM/language-translation-ui. Be sure to source the `cfcreds.env` file beforehand, as the UI expects the `IOT_ORG_ID`, `IOT_DEVICE_TYPE`, `IOT_DEVICE_ID`, `IOT_AUTH_TOKEN`, and `IOT_API_TOKEN` values to be set as environment variables
 
 ```
 git clone https://github.com/IBM/language-translation-ui
