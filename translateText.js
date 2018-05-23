@@ -24,21 +24,42 @@ var openwhisk = require('openwhisk')
 
 function main(params) {
   var ow = openwhisk();
-  var language_translator =  new LanguageTranslatorV2({
-          username: params.language_translation_username,
-          password: params.language_translation_password,
-          version: "v2",
-          url: 'https://gateway.watsonplatform.net/language-translator/api/'
-      }
-  )
+  if (params.body && JSON.parse(params.body).d) {
+    msgVals = JSON.parse(params.body).d
+  } else {
+    msgVals = params
+  }
+
+  if (params.__bx_creds && params.__bx_creds.language_translator) {
+    config = {
+      username: params.__bx_creds.language_translator.username,
+      password: params.__bx_creds.language_translator.password,
+      url: params.__bx_creds.language_translator.url,
+      version: "v2",
+      type: "bound_creds"
+    }
+  } else {
+    config = {
+      username: params.language_translator_username,
+      password: params.language_translator_password,
+      url: 'https://gateway.watsonplatform.net/language-translator/api/',
+      version: "v2",
+      type: "user_provided"
+    }
+  }
+  var language_translator =  new LanguageTranslatorV2(config)
   // var languages = ['ar', 'es', 'fr', 'en', 'it', 'de', 'pt']
-  var languages = ['es', 'fr']
+  var supportedLanguages = ['es', 'fr', 'en']
+  var languages = supportedLanguages.filter(
+    function(lang) {
+      return lang != msgVals.sourceLanguage
+  });
   var translations = languages.map(function (targetLanguage) {
     return new Promise((resolve, reject) => {
       language_translator.translate(
         {
-          text: params.payload,
-          source: params.sourceLanguage,
+          text: msgVals.payload,
+          source: msgVals.sourceLanguage,
           target: targetLanguage,
           headers: {
             'X-Watson-Technology-Preview': '2017-07-01'
@@ -55,16 +76,26 @@ function main(params) {
       )
     }).then(result =>
       ow.triggers.invoke({
-        "name": 'msgTranslated',
-        "params": {
+        name: 'msgTranslated',
+        params: {
           payload: result.translation,
-          client: params.client,
+          client: msgVals.client,
           language: targetLanguage
         }
       })
     )
   })
 
+  translations.push(
+    ow.actions.invoke({
+      name: 'iotPub',
+      params: {
+        payload: msgVals.payload,
+        client: msgVals.client,
+        language: msgVals.sourceLanguage
+      }
+    })
+  )
   return Promise.all(translations).then(function (results) {
         console.log(results);
         return resolve({payload: "Translations complete"});

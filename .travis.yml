@@ -22,3 +22,6 @@ before_script:
   - "./tests/test-yamllint.sh"
 
 script: "$TEST_RUN"
+
+git:
+  submodules: false
