@@ -25,4 +25,3 @@ script: "$TEST_RUN"
 
 git:
   submodules: false
-
