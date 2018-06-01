@@ -65,10 +65,10 @@ bx plugin update cloud-functions
 
 # Steps
 1. [Create Services](#1-create-services)
-2. [Upload Actions](#2-upload-actions)
-3. [Create Triggers](#3-create-triggers)
-4. [Create Rules](#4-create-rules)
-5. [Deploy MQTT Feed](#5-deploy-mqtt-feed)
+2. [Deploy MQTT Feed](#2-deploy-mqtt-feed)
+3. [Upload Actions](#3-upload-actions)
+4. [Create Triggers](#4-create-triggers)
+5. [Create Rules](#5-create-rules)
 6. [Deploy UI](#6-deploy-ui)
 
 ### 1. Create Services
@@ -162,7 +162,11 @@ mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKE
 }'
 ```
 
-### 2. Upload Actions
+### 2. Deploy MQTT Feed
+
+Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](https://github.com/kkbankol-ibm/openwhisk-package-mqtt-watson). This "feed" enables OpenWhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
+
+### 3. Upload Actions
 Upload each "Action" to the Cloud Functions codebase with the following commands.
 ```
 bx wsk action create translateText translateText.js
@@ -186,7 +190,7 @@ bx wsk action update sendSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${
 bx wsk action update handleIncomingSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
 ```
 
-### 3. Create Triggers
+### 4. Create Triggers
 Create `Triggers` to represent events.
 ```
 bx wsk trigger create audioMsgReceived
@@ -194,7 +198,8 @@ bx wsk trigger create txtMsgReceived
 bx wsk trigger create SMSMsgReceived
 bx wsk trigger create msgTranslated
 ```
-### 4. Create Rules
+
+### 5. Create Rules
 Create `Rules`, which execute actions when certain triggers are activated.
 ```
 # bx wsk rule create RULE_NAME TRIGGER_NAME ACTION_NAME
@@ -204,11 +209,7 @@ bx wsk rule create publishtoIOT msgTranslated iotPub
 bx wsk rule create publishtoSMS msgTranslated sendSMS
 ```
 
-### 5. Deploy MQTT Feed
-
-Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](https://github.com/kkbankol-ibm/openwhisk-package-mqtt-watson/tree/c9938971eab75b0098323fe008c116667193cdb2). This "feed" enables OpenWhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
-
-After the Feed has been deployed send a MQTT message to the topic registered with the feed like so
+After the Feed has been deployed and the rules have been established, test the process by sending a MQTT message to the topic registered with the feed like so
 ```
 source cfcreds.env
 mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKEN}" -h 'agf5n9.messaging.internetofthings.ibmcloud.com' -p 1883 -t "iot-2/type/${IOT_DEVICE_TYPE}/id/${IOT_DEVICE_ID}/evt/fromClient/fmt/json" -m '{
@@ -221,6 +222,7 @@ mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKE
 ```
 
 As soon as this command is published, we should be able to see a series of actions and triggers being called in the Cloud Functions logs. These logs can be viewed by visiting [https://console.bluemix.net/openwhisk/dashboard](https://console.bluemix.net/openwhisk/dashboard) or by running `bx wsk activation poll` in a separate tab.
+
 
 ### 6. Deploy UI
 
