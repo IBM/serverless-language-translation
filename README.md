@@ -164,7 +164,7 @@ mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKE
 
 ### 2. Deploy MQTT Feed
 
-Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](openwhisk-package-mqtt-watson). This "feed" enables OpenWhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
+Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodule [here](https://github.com/kkbankol-ibm/openwhisk-package-mqtt-watson). This "feed" enables OpenWhisk to subscribe to one or more MQTT topics and invoke actions in response to incoming messages. To see more on how feeds work with IBM Cloud Functions, please visit these [documents](https://github.com/apache/incubator-openwhisk/blob/master/docs/feeds.md)
 
 ### 3. Upload Actions
 Upload each "Action" to the Cloud Functions codebase with the following commands.
