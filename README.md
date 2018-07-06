@@ -1,3 +1,5 @@
+*Read this in other languages: [日本語](README-ja.md).*
+
 [![Build Status](https://travis-ci.org/IBM/serverless-language-translation.svg?branch=master)](https://travis-ci.org/IBM/serverless-language-translation)
 
 # Deploy a Serverless Multilingual Conference Room
