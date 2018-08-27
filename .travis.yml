@@ -4,13 +4,6 @@ python: 2.7
 cache: pip
 sudo: required
 
-addons:
-  apt:
-    sources:
-      - debian-sid
-    packages:
-      - shellcheck
-
 matrix:
   fast_finish: true
 
@@ -18,6 +11,7 @@ env:
   - TEST_RUN="echo Soon"
 
 before_install:
+  - sudo apt-get install shellcheck
   - pip install -U -r test-requirements.txt
 
 install: true
@@ -28,3 +22,6 @@ before_script:
   - "./tests/test-yamllint.sh"
 
 script: "$TEST_RUN"
+
+git:
+  submodules: false

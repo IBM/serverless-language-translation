@@ -35,5 +35,5 @@ function main(params) {
       mqttClient.publish('iot-2/type/MQTTDevice/id/965d11de/evt/token/fmt/json', token)
     }
   })
-  return {payload:  "STT token generated"}
+  return {payload:  "TTS token generated"}
 }

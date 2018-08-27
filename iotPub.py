@@ -12,12 +12,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import sys
 import requests
+
+HOST = 'messaging.internetofthings.ibmcloud.com'
+PORT = 1883
+PATH = '.' + HOST + ':' + PORT + '/api/v0002/application/types/'
+
+
 def main(dict):
     iot_org_id = dict['iot_org_id']
-    device_id = dict['device_id']
-    device_type = dict['device_type']
-    api_token = dict['api_token']
-    r = requests.post('http://' + iot_org_id + '.messaging.internetofthings.ibmcloud.com:1883/api/v0002/device/types/' + device_type '/devices/' + device_id + '/events/query', headers={'Content-Type': 'application/json'}, json={'payload': dict['payload'], 'client': dict['client'], 'language': dict['language']}, auth=('use-token-auth', api_token))
-    return {'msg': dict['msg']['text']}
+    iot_device_id = dict['iot_device_id']
+    iot_device_type = dict['iot_device_type']
+    iot_auth_token = dict['iot_auth_token']
+    iot_api_key = dict['iot_api_key']
+    requests.post('http://' + iot_org_id + PATH + iot_device_type +
+                  '/devices/' + iot_device_id + '/events/toClients',
+                  headers={'Content-Type': 'application/json'},
+                  json={
+                    'payload': dict['payload'],
+                    'client': dict['client'],
+                    'language': dict['language'] or dict['sourceLanguage']},
+                  auth=(iot_api_key, iot_auth_token))
+    return {'msg': dict['payload']}
