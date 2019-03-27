@@ -24,9 +24,9 @@ When the reader has completed this code pattern, they will understand how to:
 
 ## Included components
 
-* [OpenWhisk](https://console.ng.bluemix.net/openwhisk): Execute code on demand in a highly scalable, serverless environment.
-* [Watson Text to Speech](https://www.ibm.com/watson/developercloud/text-to-speech.html): Converts written text into natural sounding audio in a variety of languages and voices.
-* [Watson Language Translator](https://www.ibm.com/watson/services/language-translator/): Translate text from one language to another. Take text from across the globe and present it in the language of your choice.
+* [IBM Cloud Functions](https://www.ibm.com/cloud/functions): Execute code on demand in a highly scalable, serverless environment.
+* [Watson Text to Speech](https://www.ibm.com/cloud/watson-text-to-speech): Converts written text into natural sounding audio in a variety of languages and voices.
+* [Watson Language Translator](https://www.ibm.com/cloud/watson-language-translator): Translate text from one language to another. Take text from across the globe and present it in the language of your choice.
 
 ## Featured technologies
 
@@ -38,30 +38,20 @@ When the reader has completed this code pattern, they will understand how to:
 [![](http://img.youtube.com/vi/eXY0uh_SeKs/0.jpg)](https://www.youtube.com/watch?v=eXY0uh_SeKs)
 
 ## Prerequisites:
-To interact with the hosted offerings, the IBM Cloud CLI will need to be installed beforehand. The latest CLI releases can be found at the link [here](https://console.bluemix.net/docs/cli/reference/bluemix_cli/download_cli.html#download_install). An install script is maintained at the mentioned link, which can be executed with one of the following commands
+To interact with the hosted offerings, the IBM Cloud CLI will need to be installed beforehand. Instructions can be found [here](https://cloud.ibm.com/docs/cli?topic=cloud-cli-install-ibmcloud-cli).
 
-```
-# Mac OSX
-curl -fsSL https://clis.ng.bluemix.net/install/osx | sh
-
-# Linux
-curl -fsSL https://clis.ng.bluemix.net/install/linux | sh
-
-# Powershell
-iex(New-Object Net.WebClient).DownloadString('https://clis.ng.bluemix.net/install/powershell')
-```
 After installation is complete, confirm the CLI is working by printing the version
 ```
-bx -v
+ibmcloud -v
 ```
 And then install the "Cloud Functions" plugin with
 ```
-bx plugin install Cloud-Functions -r Bluemix
+ibmcloud plugin install cloud-functions
 ```
 
-If the IBM Cloud Cli was already installed, please make sure the Cloud Functions plugin is the latest version with
+If the IBM Cloud CLI was already installed, please make sure the Cloud Functions plugin is the latest version with
 ```
-bx plugin update cloud-functions
+ibmcloud plugin update cloud-functions
 ```
 
 
@@ -76,18 +66,18 @@ bx plugin update cloud-functions
 ### 1. Create Services
 
 Create the required IBM Cloud services.
-- [Speech To Text](https://console.bluemix.net/catalog/services/speech-to-text)
-- [Text To Speech](https://console.bluemix.net/catalog/services/text-to-speech)
-- [Watson IoT Platform](https://console.bluemix.net/catalog/services/internet-of-things-platform)
-- [Watson Language Translator](https://console.bluemix.net/catalog/services/language-translator)
+- [Speech To Text](https://cloud.ibm.com/catalog/services/speech-to-text)
+- [Text To Speech](https://cloud.ibm.com/catalog/services/text-to-speech)
+- [Watson IoT Platform](https://cloud.ibm.com/catalog/services/internet-of-things-platform)
+- [Watson Language Translator](https://cloud.ibm.com/catalog/services/language-translator)
 
 For SMS integration, create the following third party services.
-- [Twilio](https://console.bluemix.net/catalog/services/twilio-programmable-sms)
-- [Redis](https://console.bluemix.net/catalog/services/redis-cloud)
+- [Twilio](https://cloud.ibm.com/catalog/services/twilio-programmable-sms)
+- [Redis](https://cloud.ibm.com/catalog/services/databases-for-redis)
 
 Each service can be provisioned with the following steps
 
-Navigate to the IBM Cloud dashboard at [https://console.bluemix.net/](https://console.bluemix.net/) and click the "Catalog" button in the upper right
+Navigate to the IBM Cloud dashboard at [https://cloud.ibm.com](https://cloud.ibm.com) and click the "Catalog" button in the upper right
 <p align="center">
 <img src="https://i.imgur.com/vFCHSF4.png">
 </p>
@@ -171,44 +161,44 @@ Install the MQTT package/feed found in the openwhisk-package-mqtt-watson submodu
 ### 3. Upload Actions
 Upload each "Action" to the Cloud Functions codebase with the following commands.
 ```
-bx wsk action create translateText translateText.js
-bx wsk action create sendSMS sendSMS.js
-bx wsk action create iotPub iotPub.py
-bx wsk action create handleIncomingSMS handleIncomingSMS.js
+ibmcloud fn action create translateText translateText.js
+ibmcloud fn action create sendSMS sendSMS.js
+ibmcloud fn action create iotPub iotPub.py
+ibmcloud fn action create handleIncomingSMS handleIncomingSMS.js
 ```
 
 After each action is created, set or bind default credentials for the corresponding services.
 ```
 # Most IBM Cloud native service credentials can be easily imported to a Cloud function using the "service bind" command
-# bx wsk service bind <service> <action_name>
-bx wsk service bind language_translator translateText
-bx wsk service bind language_translator handleIncomingSMS
+# ibmcloud fn service bind <service> <action_name>
+ibmcloud fn service bind language_translator translateText
+ibmcloud fn service bind language_translator handleIncomingSMS
 
 
 # Credentials for the Watson IoT Platform and third party services can be set using the "update command"
-# bx wsk action update <action_name> -p <param_name> <param_value>
-bx wsk action update iotPub -p iot_org_id "${IOT_ORG_ID}" -p iot_device_id "${IOT_DEVICE_ID}" -p iot_device_type "${IOT_DEVICE_TYPE}" -p iot_auth_token "${IOT_AUTH_TOKEN}" -p iot_api_key "${IOT_API_KEY}"
-bx wsk action update sendSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
-bx wsk action update handleIncomingSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
+# ibmcloud fn action update <action_name> -p <param_name> <param_value>
+ibmcloud fn action update iotPub -p iot_org_id "${IOT_ORG_ID}" -p iot_device_id "${IOT_DEVICE_ID}" -p iot_device_type "${IOT_DEVICE_TYPE}" -p iot_auth_token "${IOT_AUTH_TOKEN}" -p iot_api_key "${IOT_API_KEY}"
+ibmcloud fn action update sendSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
+ibmcloud fn action update handleIncomingSMS -p twilioNumber "${TWILIO_NUMBER}" -p twilioSid "${TWILIO_SID}" -p twilioAuthToken "${TWILIO_AUTH_TOKEN}" -p redisUsername "${REDIS_USER}" -p redisPassword "${REDIS_PASSWORD}" -p redisHost "${REDIS_HOST}" -p redisPort "${REDIS_PORT}"
 ```
 
 ### 4. Create Triggers
 Create `Triggers` to represent events.
 ```
-bx wsk trigger create audioMsgReceived
-bx wsk trigger create txtMsgReceived
-bx wsk trigger create SMSMsgReceived
-bx wsk trigger create msgTranslated
+ibmcloud fn trigger create audioMsgReceived
+ibmcloud fn trigger create txtMsgReceived
+ibmcloud fn trigger create SMSMsgReceived
+ibmcloud fn trigger create msgTranslated
 ```
 
 ### 5. Create Rules
 Create `Rules`, which execute actions when certain triggers are activated.
 ```
-# bx wsk rule create RULE_NAME TRIGGER_NAME ACTION_NAME
-bx wsk rule create handleTxtMessage txtMsgReceived translateText
-bx wsk rule create handleMQTTMessage mqttMsgReceived translateText
-bx wsk rule create publishtoIOT msgTranslated iotPub
-bx wsk rule create publishtoSMS msgTranslated sendSMS
+# ibmcloud fn rule create RULE_NAME TRIGGER_NAME ACTION_NAME
+ibmcloud fn rule create handleTxtMessage txtMsgReceived translateText
+ibmcloud fn rule create handleMQTTMessage mqttMsgReceived translateText
+ibmcloud fn rule create publishtoIOT msgTranslated iotPub
+ibmcloud fn rule create publishtoSMS msgTranslated sendSMS
 ```
 
 After the Feed has been deployed and the rules have been established, test the process by sending a MQTT message to the topic registered with the feed like so
@@ -223,7 +213,7 @@ mqtt_pub -i "a:${IOT_ORG_ID}:client_pub" -u "${IOT_API_KEY}" -P "${IOT_AUTH_TOKE
 }'
 ```
 
-As soon as this command is published, we should be able to see a series of actions and triggers being called in the Cloud Functions logs. These logs can be viewed by visiting [https://console.bluemix.net/openwhisk/dashboard](https://console.bluemix.net/openwhisk/dashboard) or by running `bx wsk activation poll` in a separate tab.
+As soon as this command is published, we should be able to see a series of actions and triggers being called in the Cloud Functions logs. These logs can be viewed by visiting [https://cloud.ibm.com/openwhisk/dashboard](https://cloud.ibm.com/openwhisk/dashboard) or by running `ibmcloud fn activation poll` in a separate tab.
 
 
 ### 6. Deploy UI
