@@ -42,7 +42,7 @@ function main(params) {
     config = {
       username: params.language_translator_username,
       password: params.language_translator_password,
-      url: 'https://gateway.watsonplatform.net/language-translator/api/',
+      url: 'https://api.us-south.language-translator.watson.cloud.ibm.com',
       version: "v2",
       type: "user_provided"
     }
