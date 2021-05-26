@@ -49,7 +49,7 @@ function main(params) {
     config = {
       username: params.language_translator_username,
       password: params.language_translator_password,
-      url: 'https://gateway.watsonplatform.net/language-translator/api/',
+      url: 'https://github.com/ljbennett62/serverless-language-translation.git',
       version: "v2",
       type: "user_provided"
     }
